@@ -1,0 +1,9 @@
+__pycache__/
+dataset/
+results/
+results_user_study/
+*.zip
+*.ipynb
+src/keys.py 
+temp.py
+src/__pycache__
