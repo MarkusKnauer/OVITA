@@ -138,13 +138,6 @@ if __name__=="__main__":
                 elif feedback.lower() == "yes":
                     # Save the trajectory and results
                     get_trajectory_param = True
-                    # compare_trajectory(
-                    #     original_trajectory=get_trajectory(dict_format=False),
-                    #     modified_trajectory=convert_to_vector(modified_trajectory),
-                    #     points=detect_objects(),
-                    #     title=instruction,
-                    #     file_name=save_dir+file_name[:file_name.rindex(".")] + ".png"
-                    # )
                     # Save the trajectory after multiple feedbacks
                     if len(global_feedbacks) !=0 or len(local_feedbacks)!=0: # there are feedbacks involved after zero shot adaptation
                         final_trajectory.update({
