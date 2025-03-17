@@ -63,7 +63,7 @@ python main.py --trajectory_path <path_to_trajectory> --save_dir <path_to_save_d
 ### Try in GUI
 
 ```bash
-streamlit run main_gui_streamlit.py
+streamlit run ~/<Path to GUI File>/main_gui_streamlit.py
 ```
 > **Steps to Adapt Trajectory:**
 > 1. Upload the trajectory file via the navigator.
@@ -73,6 +73,9 @@ streamlit run main_gui_streamlit.py
 > 5. Select **Zero-Shot** as the trajectory view and inspect the modified trajectory.
 > 6. If further adjustments are needed, provide feedback, select the context type, and click **Run Adaptation**. wait for it to get completed.
 > 7. Select **Final** as the trajectory view. Repeat steps 6 and 7 until satisfied.
+> 8. Slide over the **lambda** values of the **CSM** module to satisfy the **Smoothness**, **Obstacle Avoidance**, **Similarity** and **Reachability** constraints. Press **Adjust** button to reflect the changes.
+> 9. To reset to the initial modefied results press the **Reset** button. Repeat step 8 until satisfied.
+> 10. Once satisfied **browse** for the respective directory and press **Save** buttom to save the results.
 ---
 
 📌 Using Your Own Trajectory:
