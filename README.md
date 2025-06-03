@@ -36,7 +36,7 @@ Clone this repository with
 cd ~
 git clone https://github.com/anurag1000101/OVITA.git
 cd OVITA
-conda create -n ovita python=3.9 anaconda
+conda env create -n ovita python=3.9
 conda activate ovita
 pip install -r requirements.txt
 ```
