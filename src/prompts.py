@@ -59,9 +59,9 @@ Example:
 Instruction: Walk closer to the box
 High level plan:
 1) Keep the goal position and starting position same.
-4) Identify the location of the box. 
-5) Iterate over the intermediate points increasing their distance from the box in a gradual fashion from the endpoints. 
-6) Ensure that the shape of the trajectory is preserved. Smoothen the trajectory to remove abrupt changes
+2) Identify the location of the box. 
+3) Iterate over the intermediate points increasing their distance from the box in a gradual fashion from the endpoints. 
+4) Ensure that the shape of the trajectory is preserved. Smoothen the trajectory to remove abrupt changes
 
 """
 

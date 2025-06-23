@@ -7,3 +7,5 @@ results_user_study/
 src/keys.py 
 temp.py
 src/__pycache__
+result_comparision/
+garbage/

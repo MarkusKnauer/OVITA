@@ -1,7 +1,8 @@
 
 from src.constraints import RobotArm7DOF_constraint, Drone_and_husky_constraints, general_constraints
+from src.CSM import constraint_satisfaction_module
 from src.config import Config
-from src.util import convert_to_vector,compare_trajectory
+from src.util import convert_to_vector,convert_from_vector,compare_trajectory
 from src.agent import LLM_Agent
 import copy
 import json
@@ -98,14 +99,35 @@ if __name__=="__main__":
     agent=LLM_Agent(config)
     get_trajectory_param=True
     # Robot or environment specific 
+    safety_margin_obstacles=0.01
+    safety_margin_boundary=0.01
     if args.robot_type=='Drone':
-        robot=Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE,is_ground_robot=False)
+        # robot=Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE,is_ground_robot=False)
+        workspace_type="cuboidal"
+        workspace_bounds = {
+            "x": [-1, 1],
+            "y": [-0.25, 1],
+            "z": [-1, 0],
+        }
     elif args.robot_type=='Arm':
-        robot=RobotArm7DOF_constraint()
+        workspace_type="arm" 
+        workspace_bounds={
+            "centre": [-0.1, 0, 0.1],
+            "link_lengths": [0.1,0.2,0.1],
+        }
+        # robot=RobotArm7DOF_constraint()
     elif args.robot_type=='GroundRobot':
-        robot=Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE,is_ground_robot=True)
+        workspace_type="cuboidal"
+        workspace_bounds = {
+            "x": [-1, 1],
+            "y": [-0.25, 1],
+            "z": [0, 0],
+        }
+        # robot=Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE,is_ground_robot=True)
     else: 
-        robot=general_constraints(safety_distance=config.SAFETY_DISTANCE)   
+        workspace_type="general"
+        workspace_bounds=None
+        # robot=general_constraints(safety_distance=config.SAFETY_DISTANCE)   
     instruction=data['instruction'].lower()
     modified_trajectory_list=[]
     feedback=None
@@ -168,10 +190,12 @@ if __name__=="__main__":
                 else: 
                     env_descp=env_descp+" \n"+env_object_info
                 high_level_plan,generated_code = agent.generate_code(new_instruction,env_descp)
+                import ipdb; ipdb.set_trace()
                 exec(generated_code,globals())
-                variables=agent.extract_variables_and_constants(generated_code)
+                # variables=agent.extract_variables_and_constants(generated_code)
                 # import ipdb; ipdb.set_trace()
-                variable_values = {var: globals().get(var, None) for var in variables}
+                # variable_values = {var: globals().get(var, None) for var in variables}
+                variable_values={}
                 interpretation=agent.explain_code(generated_code,variable_values)
                 print("The interpretation of the code is \n", interpretation)
             except Exception as e:
@@ -183,7 +207,16 @@ if __name__=="__main__":
                     final_trajectory.update({"code_executability":False})
                 break   
             
-            modified_trajectory=robot.satisfy_constraints(modified_trajectory,detect_objects())
+            modified_trajectory = convert_from_vector(constraint_satisfaction_module(
+                    trajectory=convert_to_vector(modified_trajectory),
+                    workspace_type=workspace_type,
+                    workspace_bounds=workspace_bounds,
+                    obstacles=detect_objects(),
+                    safety_margin_obstacles=safety_margin_obstacles,
+                    safety_margin_boundary=safety_margin_boundary,
+                ))
+
+            # modified_trajectory=robot.satisfy_constraints(modified_trajectory,detect_objects())
             print("Constraints satisfied")
 
             if feedback is None or feedback_type=="[original]":
@@ -225,7 +258,8 @@ if __name__=="__main__":
                 'zero_shot_trajectory': zero_shot_trajectory,
                 'final_trajectory': final_trajectory,
                 'LLM': config.api_name,
-                'code_executability':False
+                'code_executability':False,
+                'generated_code':generated_code
             }, outfile, indent=4)
         exit()
 

@@ -7,22 +7,84 @@ from scipy.interpolate import interp1d
 import copy
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-def compare_trajectory(original_trajectory, modified_trajectory, title, points=None, elev=30, azim=45, file_name=None):
+def compare_trajectory(original_trajectory, modified_trajectory, title, points=None,visualize_workspace=False, workspace_type=None, workspace_bounds=None, elev=30, azim=45, file_name=None):
     """
     Helper function to visualize the trajectory. Use elev and azim parameters to set the camera view.
     Points is a set of critical points/objects observed in the environment.
     Reds represent modified trajectory.
     """
+
     # Extract points and velocities
     x1, y1, z1, vel1 = map(list, zip(*original_trajectory))
     x2, y2, z2, vel2 = map(list, zip(*modified_trajectory))
     # Set up a figure with two subplots: one for 3D trajectory and one for velocity profile
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 10), gridspec_kw={'height_ratios': [3, 1]})
-    plt.tight_layout()
+    plt.tight_layout(pad=1.6, w_pad=0.5, h_pad=1.0)
     plt.axis('off')
     
     # 3D Trajectory Plot
     ax1 = fig.add_subplot(211, projection='3d')
+
+    if visualize_workspace:
+        if workspace_type is None or workspace_type=="general": 
+            print("Continuing without workspace visualization")
+        elif workspace_type=="cuboidal":
+            # Visualize the cuboidal workspace bounds
+            if workspace_bounds is not None:
+                x_bounds = workspace_bounds.get("x", [-1, 1])
+                y_bounds = workspace_bounds.get("y", [-1, 1])
+                z_bounds = workspace_bounds.get("z", [-1, 1])
+
+                # Define the 8 vertices of the cuboid
+                vertices = [
+                    [x_bounds[0], y_bounds[0], z_bounds[0]],
+                    [x_bounds[1], y_bounds[0], z_bounds[0]],
+                    [x_bounds[1], y_bounds[1], z_bounds[0]],
+                    [x_bounds[0], y_bounds[1], z_bounds[0]],
+                    [x_bounds[0], y_bounds[0], z_bounds[1]],
+                    [x_bounds[1], y_bounds[0], z_bounds[1]],
+                    [x_bounds[1], y_bounds[1], z_bounds[1]],
+                    [x_bounds[0], y_bounds[1], z_bounds[1]],
+                ]
+                # Define the 6 faces of the cuboid
+                faces = [
+                    [vertices[0], vertices[1], vertices[2], vertices[3]],  # Bottom
+                    [vertices[4], vertices[5], vertices[6], vertices[7]],  # Top
+                    [vertices[0], vertices[1], vertices[5], vertices[4]],  # Front
+                    [vertices[2], vertices[3], vertices[7], vertices[6]],  # Back
+                    [vertices[1], vertices[2], vertices[6], vertices[5]],  # Right
+                    [vertices[0], vertices[3], vertices[7], vertices[4]],  # Left
+                ]
+                # Draw the cuboid workspace as a transparent box
+                workspace_poly = Poly3DCollection(faces, alpha=0.15, linewidths=1.5, edgecolors='green')
+                workspace_poly.set_facecolor('green')
+                ax1.add_collection3d(workspace_poly)
+                # Optionally, label the workspace
+                center_x = (x_bounds[0] + x_bounds[1]) / 2
+                center_y = (y_bounds[0] + y_bounds[1]) / 2
+                center_z = z_bounds[1]
+                ax1.text(center_x, center_y, center_z + 0.05, "Workspace", color='green', fontsize=14, ha='center')
+        elif workspace_type=="arm":
+            # Visualize the arm's spherical workspace
+            if workspace_bounds is not None:
+                center = workspace_bounds.get("centre", [0, 0, 0])
+                link_lengths = workspace_bounds.get("link_lengths", [1])
+                radius = sum(link_lengths)
+                # Create a sphere
+                u = np.linspace(0, 2 * np.pi, 100)
+                v = np.linspace(0, np.pi, 100)
+                x = center[0] + radius * np.outer(np.cos(u), np.sin(v))
+                y = center[1] + radius * np.outer(np.sin(u), np.sin(v))
+                z = center[2] + radius * np.outer(np.ones_like(u), np.cos(v))
+                ax1.plot_surface(x, y, z, color='green', alpha=0.15, edgecolor='none')
+                ax1.text(center[0], center[1], center[2] + radius + 0.05, "Arm Workspace", color='green', fontsize=14, ha='center')
+        else:
+            print(f"{workspace_type} not supported. Choose from ('arm' or 'cuboidal')")
+
+
+
+
+
     ax1.plot(x1, y1, z1, label='Original Trajectory', color='blue')
     # ax1.scatter(x1, y1, z1, color='blue', marker='o')
     ax1.plot(x2, y2, z2, label='Modified Trajectory', color='red')
@@ -44,39 +106,36 @@ def compare_trajectory(original_trajectory, modified_trajectory, title, points=N
     
     # Plot the objects present in the environment
     if points is not None:
-        for obj in points:
+        for cuboid in points:
             # Extract object properties
-            name = obj["name"]
-            name = obj["name"]
-            x = obj["x"]
-            y = obj["y"]
-            z = obj["z"]
-            obj_length = obj['dimensions'][0]
-            obj_width = obj['dimensions'][1]
-            obj_height = obj['dimensions'][2]
+            name = cuboid["name"]
+            x = cuboid["x"]
+            y = cuboid["y"]
+            z = cuboid["z"]
+            cuboid_length = cuboid['dimensions'][0]
+            cuboid_width = cuboid['dimensions'][1]
+            cuboid_height = cuboid['dimensions'][2]
 
             # Define the vertices of the cuboid
-            # Correctly define the vertices of a cuboid
             vertices = [
-                [x - obj_length / 2, y - obj_width / 2, z - obj_height / 2],  # Bottom-front-left
-                [x + obj_length / 2, y - obj_width / 2, z - obj_height / 2],  # Bottom-front-right
-                [x + obj_length / 2, y + obj_width / 2, z - obj_height / 2],  # Bottom-back-right
-                [x - obj_length / 2, y + obj_width / 2, z - obj_height / 2],  # Bottom-back-left
-                [x - obj_length / 2, y - obj_width / 2, z + obj_height / 2],  # Top-front-left
-                [x + obj_length / 2, y - obj_width / 2, z + obj_height / 2],  # Top-front-right
-                [x + obj_length / 2, y + obj_width / 2, z + obj_height / 2],  # Top-back-right
-                [x - obj_length / 2, y + obj_width / 2, z + obj_height / 2],  # Top-back-left
+                [x - cuboid_length / 2, y - cuboid_width / 2, z - cuboid_height / 2],  # Bottom-front-left
+                [x + cuboid_length / 2, y - cuboid_width / 2, z - cuboid_height / 2],  # Bottom-front-right
+                [x + cuboid_length / 2, y + cuboid_width / 2, z - cuboid_height / 2],  # Bottom-back-right
+                [x - cuboid_length / 2, y + cuboid_width / 2, z - cuboid_height / 2],  # Bottom-back-left
+                [x - cuboid_length / 2, y - cuboid_width / 2, z + cuboid_height / 2],  # Top-front-left
+                [x + cuboid_length / 2, y - cuboid_width / 2, z + cuboid_height / 2],  # Top-front-right
+                [x + cuboid_length / 2, y + cuboid_width / 2, z + cuboid_height / 2],  # Top-back-right
+                [x - cuboid_length / 2, y + cuboid_width / 2, z + cuboid_height / 2],  # Top-back-left
             ]
-
 
             # Define the 6 faces of the cuboid using the vertices
             faces = [
-                [vertices[0], vertices[1], vertices[5], vertices[4]],
-                [vertices[1], vertices[2], vertices[6], vertices[5]],
-                [vertices[2], vertices[3], vertices[7], vertices[6]],
-                [vertices[3], vertices[0], vertices[4], vertices[7]],
-                [vertices[0], vertices[1], vertices[2], vertices[3]],
-                [vertices[4], vertices[5], vertices[6], vertices[7]]
+                [vertices[0], vertices[1], vertices[2], vertices[3]],  # Bottom face
+                [vertices[4], vertices[5], vertices[6], vertices[7]],  # Top face
+                [vertices[0], vertices[1], vertices[5], vertices[4]],  # Front face
+                [vertices[2], vertices[3], vertices[7], vertices[6]],  # Back face
+                [vertices[1], vertices[2], vertices[6], vertices[5]],  # Right face
+                [vertices[0], vertices[3], vertices[7], vertices[4]]   # Left face
             ]
 
             # Create a 3D polygon collection
@@ -84,9 +143,9 @@ def compare_trajectory(original_trajectory, modified_trajectory, title, points=N
             poly3d.set_facecolor('grey')
             ax1.add_collection3d(poly3d)
 
-            # Add label to the center of the top face of the object
-            # Add label to the top of the object
-            ax1.text(x + obj_length / 2, y + obj_width / 2, z + obj_height+0.05, name,
+            # Add label to the center of the top face of the cuboidect
+            # Add label to the top of the cuboidect
+            ax1.text(x + cuboid_length / 2, y + cuboid_width / 2, z + cuboid_height+0.05, name,
             color='black', ha='left', va='top', fontsize=18,font='times new roman')
 
 
@@ -95,17 +154,18 @@ def compare_trajectory(original_trajectory, modified_trajectory, title, points=N
     ax1.set_ylabel('Y')
     ax1.set_zlabel('Z')
     ax1.set_title(title)
+    ax1.set_aspect("equal")
     # ax1.legend(loc="upper left")
 
     # Velocity Profile Plot
     ax2 = fig.add_subplot(212)
-    ax2.plot(range(len(vel1)), vel1, label="Original Velocity", color='blue')
-    ax2.plot(range(len(vel2)), vel2, label="Modified Velocity", color='red')
+    ax2.plot(range(len(vel1)), vel1, label="Original Speed", color='blue')
+    ax2.plot(range(len(vel2)), vel2, label="Modified Speed", color='red')
     
     # Set labels for the Velocity Profile plot
     ax2.set_xlabel('Position Index')
-    ax2.set_ylabel('Velocity')
-    ax2.set_title('Velocity Profile')
+    ax2.set_ylabel('Speed')
+    ax2.set_title('Speed Profile')
     # ax2.legend()
 
     # Save or show plot
@@ -216,8 +276,7 @@ def point_line_distance(point, start, end):
         projection = start + projection_length * line_unitvec
         return np.linalg.norm(point - projection)
 
-def iterative_endpoint_fit(trajectory, tolerance, normalize=True):
-    trajectory=convert_to_vector(trajectory)
+def iterative_endpoint_fit(trajectory, tolerance=0.01):
     # Ignore the velocity component
     if len(trajectory) < 3:
         return trajectory
@@ -240,33 +299,41 @@ def iterative_endpoint_fit(trajectory, tolerance, normalize=True):
             return np.array([points[start_idx], points[end_idx]])
     
     simplified_trajectory = simplify_recursive(0, len(trajectory) - 1, trajectory)
-    return convert_from_vector(simplified_trajectory)
+    return simplified_trajectory
 
 # Return smoothened trajectory using cubic spline function
 def smooth_trajectory_spline(trajectory, num_points=80):
-   if not trajectory or len(trajectory) < 2:
-      return trajectory
+    """
+    Smooths a trajectory including velocity using cubic spline interpolation.
+    trajectory: numpy array with shape (n,4) containing x,y,z,velocity values
+    """
+    if not isinstance(trajectory, np.ndarray) or len(trajectory) < 2:
+        return trajectory
+    
+    # Create time points for interpolation
+    t = np.arange(len(trajectory))
+    
+    # Fit cubic splines for x, y, z, velocity coordinates
+    spline_x = CubicSpline(t, trajectory[:, 0])
+    spline_y = CubicSpline(t, trajectory[:, 1])
+    spline_z = CubicSpline(t, trajectory[:, 2])
+    spline_vel = CubicSpline(t, trajectory[:, 3])
+    
+    # Generate new time points for smooth interpolation
+    t_new = np.linspace(0, len(trajectory) - 1, num=num_points)
+    
+    # Interpolate x, y, z, velocity coordinates
+    x_smooth = spline_x(t_new)
+    y_smooth = spline_y(t_new)
+    z_smooth = spline_z(t_new)
+    vel_smooth = spline_vel(t_new)
+    
+    # Combine into final smoothed trajectory
+    smoothed_trajectory = np.column_stack((x_smooth, y_smooth, z_smooth, vel_smooth))
+    
+    return smoothed_trajectory
 
-   t = np.arange(len(trajectory)) 
-   x = np.array([point['x'] for point in trajectory])
-   y = np.array([point['y'] for point in trajectory])
-   z = np.array([point['z'] for point in trajectory])
-   velocity = np.array([point['velocity'] for point in trajectory])
-   spline_x = CubicSpline(t, x)
-   spline_y = CubicSpline(t, y)
-   spline_z = CubicSpline(t, z)
-   spline_velocity = CubicSpline(t, velocity)
 
-   t_new = np.linspace(0, len(trajectory) - 1, num=num_points)
-   x_smooth = spline_x(t_new)
-   y_smooth = spline_y(t_new)
-   z_smooth = spline_z(t_new)
-   velocity_smooth = spline_velocity(t_new)
-   smoothed_trajectory = [
-       {'x': x_smooth[i], 'y': y_smooth[i], 'z': z_smooth[i], 'velocity': velocity_smooth[i]}
-       for i in range(num_points)
-   ]
-   return smoothed_trajectory
 
 
 

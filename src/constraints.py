@@ -58,7 +58,7 @@ class TrajectoryOptimizer:
         return grad
 
 
-    def compute_obstacle_gradient(self, trajectory, obstacles):
+    def compute_obstacle_gradient(self, trajectory, obstacles): 
         grad = np.zeros_like(trajectory)
         for i, point in enumerate(trajectory):
             for obstacle in obstacles:

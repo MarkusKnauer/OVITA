@@ -11,7 +11,11 @@ import copy
 import tkinter as tk
 from tkinter import filedialog
 import re
+import time
+st.set_page_config(layout="wide")
+placeholder = st.empty()
 cwd = os.getcwd()
+
 if "original_trajectory" not in st.session_state:
         st.session_state.original_trajectory = []
 if "modified_trajectory" not in st.session_state:
@@ -36,6 +40,20 @@ if 'final_trajectory' not in st.session_state:
     st.session_state.final_trajectory = {"modified trajectory":[]}
 if 'modified_trajectory_list' not in st.session_state:
     st.session_state.modified_trajectory_list = []
+if "lambda_smooth" not in st.session_state:
+    st.session_state.lambda_smooth = 0
+if "lambda_obstacle" not in st.session_state:
+    st.session_state.lambda_obstacle = 0
+if "lambda_original" not in st.session_state:
+    st.session_state.lambda_original = 0
+if "lambda_reach" not in st.session_state:
+    st.session_state.lambda_reach = 0
+if "lambda_adjust" not in st.session_state:
+    st.session_state.lambda_adjust = False
+if "retrive" not in st.session_state:
+    st.session_state.retrive = False
+
+
 def load_trajectory(file):
     return json.load(file)
 def get_trajectory(sample=True,num_points=100, dict_format=True):
@@ -128,18 +146,6 @@ def plot_trajectory(fig,original, modified, objects,instruction):
             name='Modified End'
         ))
     
-    
-    # for obj in objects:
-    #     x, y, z = obj['x'],obj['y'],obj['z']
-    #     dx, dy, dz = obj['dimensions']
-    #     fig.add_trace(go.Mesh3d(
-    #         x=[x, x+dx, x+dx, x, x, x+dx, x+dx, x],
-    #         y=[y, y, y+dy, y+dy, y, y, y+dy, y+dy],
-    #         z=[z, z, z, z, z+dz, z+dz, z+dz, z+dz],
-    #         color='gray', opacity=0.50, name=obj['name']
-    #     ))
-    # fig.update_layout(title='Trajectory Visualization', margin=dict(l=0, r=0, b=0, t=40))
-    # Plot the objects in the environment
     for obj in objects:
         name = obj["name"]
         x = obj["x"]
@@ -205,8 +211,6 @@ def plot_trajectory(fig,original, modified, objects,instruction):
          margin=dict(l=10, r=10, t=40, b=10),
         showlegend=False,autosize=True
     )
-    # return fig
-    # st.plotly_chart(fig)
 
 def plot_velocity(fig,original, modified):
     # fig = go.Figure()
@@ -257,22 +261,29 @@ if uploaded_file:
         run_adaptation=st.button("Run Adaptation")
         save_button=st.button("Save")
         browse_button=st.button("Browse for Directory")
-        st.markdown("Lambda Settings")
-        lambda_smooth = st.slider("Smoothness", 0.0, 10.0, 1.0, step=0.1)
-        lambda_obstacle = st.slider("Obstacle", 0.0, 10.0, 3.0, step=0.1)
-        lambda_original = st.slider("Original Trajectory Similarity", 0.0, 10.0, 0.5, step=0.1)
-        lambda_reach = st.slider("Reachability", 0.0, 10.0, 0.0, step=0.1)
         # Create some empty space before the toggle button
         for _ in range(2):  # Adjust the range for more/less space
             st.sidebar.text("")
-        toggle_state = st.toggle("Constraints Satisfaction",value=True)
+
+        if st.session_state.run_count>0:
+            st.header(f"Constraints Satisfaction Module")
+            st.subheader(f"Lambda Settings")
+            st.session_state.lambda_smooth = st.slider("Smoothness", 0.0, 10.0, 1.0, step=0.1)
+            st.session_state.lambda_obstacle = st.slider("Obstacle", 0.0, 10.0, 3.0, step=0.1)
+            st.session_state.lambda_original = st.slider("Original Trajectory Similarity", 0.0, 10.0, 0.5, step=0.1)
+            st.session_state.lambda_reach = st.slider("Reachability", 0.0, 10.0, 0.0, step=0.1)
+            st.session_state.lambda_adjust=st.button("Lambda Adjust")
+            st.session_state.retrive=st.button("Reset")
+            # print(st.session_state.lambda_smooth)
     # if st.session_state.run_count>0:
-    traj_sel=st.selectbox("Trajectory View Select", ["original_trajectory","zero_shot_trajectory", "final_trajectory"],index=0)
+    traj_sel=st.selectbox("Trajectory View Select", ["original_trajectory","zero_shot_trajectory", "final_trajectory"],index=st.session_state.run_count if st.session_state.run_count<3 else 2)
     # if st.session_state.zero_shot_trajectory["modified trajectory"] !=[]:
     if traj_sel=="zero_shot_trajectory" or traj_sel=="final_trajectory":
-        # print(st.session_state["zero_shot_trajectory"])
+        print(st.session_state["zero_shot_trajectory"])
         st.header(f"Modified Trajectory")
         st.subheader(f"Instruction: {instruction}")
+        if st.session_state.feedback != "" and traj_sel=="final_trajectory":
+            st.subheader(f"Feedback: [{st.session_state.feedback_type}] {st.session_state.feedback}")
     else:
         st.header(f"Original Trajectory")
     col1, col2 = st.columns(2) 
@@ -285,61 +296,33 @@ if uploaded_file:
         fig_vel=go.Figure()
         plot_velocity(fig_vel,st.session_state["original_trajectory"],st.session_state["original_trajectory"] if traj_sel=="original_trajectory" else st.session_state[traj_sel]["modified trajectory"])
         st.plotly_chart(fig_vel,use_container_width=True)
-    # if st.session_state.run_count>0:
-    # if st.session_state.feedback!="" and st.session_state.feedback_type!= None:
     if traj_sel=="final_trajectory":
-        # st.text_area("Modefied Intrepretation", , height=200, disabled=True)
         st.header("Final Intrepretation")
-        # st.subheader("High Level Plan")
-        # st.markdown("\n".join([f"- {fb}" for fb in [point.strip()for point in re.split(r'\d+\)', st.session_state[traj_sel]["high_level_plan"]) if point.strip()]]))
-        # st.subheader("Code As a Policy")
-        # st.code(st.session_state[traj_sel]["code"], language='python') 
-        # st.subheader("Code Explanation")
-        # st.markdown(st.session_state[traj_sel]["interpretation"])
-        # st.markdown("\n".join([f"- {fb}" for fb in st.session_state.interpretation_details])) 
-    # if st.session_state.zero_shot_trajectory["modified trajectory"] !=[]:
     if traj_sel=="zero_shot_trajectory":
         st.header("Zero Shot Intrepretation")
-        # st.subheader("High Level Plan")
-        # st.markdown("\n".join([f"- {fb}" for fb in [point.strip()for point in re.split(r'\d+\)', st.session_state.interpretation_details[0]) if point.strip()]]))
-        # st.subheader("Code As a Policy")
-        # st.code(st.session_state.interpretation_details[1], language='python') 
-        # st.subheader("Code Explanation")
-        # st.markdown(st.session_state.interpretation_details[2])
-        # st.markdown("\n".join([f"- {fb}" for fb in st.session_state.interpretation_details]))
     if traj_sel!="original_trajectory":
         st.subheader("High Level Plan")
         st.markdown("\n".join([f"- {fb}" for fb in [point.strip()for point in re.split(r'\d+\)', st.session_state[traj_sel]["high_level_plan"]) if point.strip()]]))
-        st.subheader("Code As a Policy")
-        st.code(st.session_state[traj_sel]["code"], language='python') 
+
         st.subheader("Code Explanation")
         st.markdown(st.session_state[traj_sel]["interpretation"])
+
+        st.subheader("Code As a Policy")
+        st.code(st.session_state[traj_sel]["code"], language='python') 
+        
     
     config.api_name = llm_choice
     agent = LLM_Agent(config)
     
     if robot_type == 'Drone':
-        robot = Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE, is_ground_robot=False,lambda_smooth=lambda_smooth,lambda_obstacle=lambda_obstacle,lambda_original=lambda_original,lambda_reach=lambda_reach)
+        robot = Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE, is_ground_robot=False,lambda_smooth=st.session_state.lambda_smooth,lambda_obstacle=st.session_state.lambda_obstacle,lambda_original=st.session_state.lambda_original,lambda_reach=st.session_state.lambda_reach)
     elif robot_type == 'Arm':
         robot = RobotArm7DOF_constraint()
     elif robot_type == 'GroundRobot':
-        robot = Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE, is_ground_robot=True,lambda_smooth=lambda_smooth,lambda_obstacle=lambda_obstacle,lambda_original=lambda_original,lambda_reach=lambda_reach)
+        robot = Drone_and_husky_constraints(safety_distance=config.SAFETY_DISTANCE, is_ground_robot=True,lambda_smooth=st.session_state.lambda_smooth,lambda_obstacle=st.session_state.lambda_obstacle,lambda_original=st.session_state.lambda_original,lambda_reach=st.session_state.lambda_reach)
     else:
-        robot = general_constraints(safety_distance=config.SAFETY_DISTANCE,lambda_smooth=lambda_smooth,lambda_obstacle=lambda_obstacle,lambda_original=lambda_original,lambda_reach=lambda_reach)
+        robot = general_constraints(safety_distance=config.SAFETY_DISTANCE,lambda_smooth=st.session_state.lambda_smooth,lambda_obstacle=st.session_state.lambda_obstacle,lambda_original=st.session_state.lambda_original,lambda_reach=st.session_state.lambda_reach)
     
-    # feedback=""
-    # feedback_type=None
-    # global_feedbacks=[]
-    # local_feedbacks=[]
-    # zero_shot_trajectory={}
-    # final_trajectory={}
-    # modified_trajectory_list=[]
-    # Initialize session state for feedback
-    
-    # if "objects" not in st.session_state:
-    #     st.session_state.objects = []
-    # if "instruction" not in st.session_state:
-    #     st.session_state.instruction = ""
     # Button to open directory picker
     if browse_button:
         selected_dir = select_directory()
@@ -348,8 +331,7 @@ if uploaded_file:
 
     # Display selected directory
     save_dir = st.session_state.get("save_dir", "Not selected")
-    try:
-        
+    try:   
         if run_adaptation:
                 st.session_state.run_count += 1  # Increment count
             # Get the feedback type 
@@ -379,21 +361,13 @@ if uploaded_file:
                     else: 
                         env_descp+=" \n"+env_object_info
                     high_level_plan,generated_code = agent.generate_code(st.session_state.new_instruction,env_descp)
-                    # variables=agent.extract_variables_and_constants(generated_code)
-                    # exec_context={}
-                    # exec(generated_code, {"get_trajectory": get_trajectory, "detect_objects": detect_objects, "math": math, "numpy": np}, exec_context)
-                    # print("Wall 1")
-                    # # Retrieve values of the non-reassigned variables
-                    # variable_values = {var: exec_context[var] for var in variables if var in exec_context}
-                    # interpretation=agent.explain_code(generated_code,variable_values)
-                    # print("The interpretation of the code is \n", interpretation)
                     exec(generated_code,globals())
                     variables=agent.extract_variables_and_constants(generated_code)
                     # import ipdb; ipdb.set_trace()
                     variable_values = {var: globals().get(var, None) for var in variables}
                     interpretation=agent.explain_code(generated_code,variable_values)
                     st.session_state.interpretation_details=[high_level_plan,generated_code,interpretation]
-                    # print("The interpretation of the code is \n", interpretation)
+                    print("The interpretation of the code is \n", interpretation)
                 except Exception as e:
                     print(f"Error executing the generated code: {e}")
                     # Terminate loop if executable code is not produced
@@ -401,30 +375,16 @@ if uploaded_file:
                         st.session_state.zero_shot_trajectory.update({"code_executability":False})
                     else: 
                         st.session_state.final_trajectory.update({"code_executability":False})
-                if toggle_state:   
-                    st.session_state.modified_trajectory=robot.satisfy_constraints(modified_trajectory,detect_objects())
-                else:
-                    st.session_state.modified_trajectory=modified_trajectory
-                # print("Constraints satisfied")
-                # print(st.session_state.new_instruction)
-                # print(st.session_state.feedback,st.session_state.feedback_type)
+                st.session_state.modified_trajectory=modified_trajectory
+                print("Constraints satisfied")
+                print(st.session_state.new_instruction)
+                print(st.session_state.feedback,st.session_state.feedback_type)
                 if st.session_state.feedback is None or st.session_state.feedback_type=="original":
                     st.session_state.original_trajectory=get_trajectory()
                 elif st.session_state.feedback_type=="current":
-                    # print("current context, trajectory extracted from modified list")# Request feedback
+                    print("current context, trajectory extracted from modified list")# Request feedback
                     st.session_state.original_trajectory=st.session_state.modified_trajectory_list[-1]
                 
-                # Visualise the trajectory
-                compare_trajectory(
-                    original_trajectory=convert_to_vector(st.session_state.original_trajectory),
-                    modified_trajectory=convert_to_vector(st.session_state.modified_trajectory),
-                    points=detect_objects(),
-                    title=instruction
-                )
-                ###############
-                # plot_trajectory(original_trajectory, st.session_state.modified_trajectory,detect_objects(),new_instruction)
-                # plot_velocity(original_trajectory, st.session_state.modified_trajectory)
-                ###############
                 # Store the zero-shot trajectory and corresponding data
                 if st.session_state.feedback =="": 
                     st.session_state.zero_shot_trajectory.update({
@@ -452,49 +412,26 @@ if uploaded_file:
                     })
 
                 st.session_state.modified_trajectory_list.append(st.session_state.modified_trajectory)
-                # if st.session_state.feedback:
-                # if st.session_state.feedback.lower() == "yes":
-                #         # Save the trajectory and results
-                #         get_trajectory_param = True
-                        # compare_trajectory(
-                        #     original_trajectory=get_trajectory(dict_format=False),
-                        #     modified_trajectory=convert_to_vector(modified_trajectory),
-                        #     points=detect_objects(),
-                        #     title=instruction,
-                        #     file_name=save_dir+file_name[:file_name.rindex(".")] + ".png"
-                        # )
-                        # Save the trajectory after multiple feedbacks
-                # if len(st.session_state.global_feedbacks) !=0 or len(st.session_state.local_feedbacks)!=0: # there are feedbacks involved after zero shot adaptation
-                #     st.session_state.final_trajectory.update({
-                #         "trajectory": get_trajectory(), 
-                #         "instruction": instruction,
-                #         "objects": detect_objects(),
-                #         "modified trajectory": st.session_state.modified_trajectory,
-                #         "high_level_plan": high_level_plan,
-                #         "code": generated_code, 
-                #         "global feedbacks": st.session_state.global_feedbacks,
-                #         "local feedbacks": local_feedbacks,
-                #         "interpretation": interpretation,
-                #         "code_executability": True
-                #     })
-        # Display Global Feedbacks
-        # if global_feedbacks:
-        #     st.subheader("Global Feedbacks")
-        #     st.markdown("\n".join([f"- {fb}" for fb in global_feedbacks]))
-
-        # # Display Local Feedbacks
-        # if local_feedbacks:
-        #     st.subheader("Local Feedbacks")
-        #     st.markdown("\n".join([f"- {fb}" for fb in local_feedbacks]))
-                # plot_trajectory(fig_traj,st.session_state.original_trajectory, st.session_state.modified_trajectory,detect_objects(),st.session_state.new_instruction)
-                # plot_velocity(fig_traj,st.session_state.original_trajectory, st.session_state.modified_trajectory)
+                placeholder.write("Generating...")
+                time.sleep(5)
                 st.rerun()
-        # if  len(st.session_state.modified_trajectory) !=0: 
-            # col1, col2 = st.columns(2)  
-            # with col1:
-            #     plot_trajectory(st.session_state.original_trajectory, st.session_state.modified_trajectory,detect_objects(),st.session_state.new_instruction)
-            # with col2:
-            #     plot_velocity(st.session_state.original_trajectory, st.session_state.modified_trajectory)
+        if st.session_state.run_count>0:
+            if st.session_state.lambda_adjust:
+                if traj_sel=="zero_shot_trajectory":
+                    zero_shot_modified_trajectory=robot.satisfy_constraints(st.session_state.modified_trajectory_list[0],detect_objects())
+                    st.session_state["zero_shot_trajectory"]["modified trajectory"]=zero_shot_modified_trajectory
+                if traj_sel=="final_trajectory":
+                    final_modified_trajectory=robot.satisfy_constraints(st.session_state.modified_trajectory_list[-1],detect_objects())
+                    st.session_state["final_trajectory"]["modified trajectory"]=final_modified_trajectory
+                placeholder.write("Lambda Adjustment...")
+                time.sleep(5) 
+                st.rerun() 
+            if st.session_state.retrive:
+                st.session_state["zero_shot_trajectory"]["modified trajectory"]=st.session_state.modified_trajectory_list[0]
+                st.session_state["final_trajectory"]["modified trajectory"]=st.session_state.modified_trajectory_list[-1]
+                placeholder.write("Retriving Original Modification...")
+                time.sleep(5) 
+                st.rerun()
     except Exception as e:
         print(f"Error {e} has occured")
         with st.expander("⚠️ Error Details"):
@@ -520,45 +457,5 @@ if uploaded_file:
                     'LLM': config.api_name,
                     'code_executability': True
                 }, outfile, indent=4)
-        # env_descp = data.get("Env_descp", "")
-        # high_level_plan, generated_code = agent.generate_code(instruction, env_descp)
-        
-        # try:
-        #     exec(generated_code, globals())
-        #     modified_trajectory = robot.satisfy_constraints(modified_trajectory, detect_objects())
-        #     # print(modified_trajectory)
-        #     plot_trajectory(original_trajectory, modified_trajectory,detect_objects())
-        #     plot_velocity(original_trajectory, modified_trajectory)
-        #     feedback_type=st.selectbox("Feedback Type:", ["Original","Current"])
-        #     feedback = st.text_input("Provide Feedback (or type YES if satisfied):")
-        #     global_feedbacks = []
-        #     local_feedbacks = []
-        #     if feedback_type == "original":
-        #         global_feedbacks.append(feedback)
-        #         new_instruction = instruction + " ".join(global_feedbacks)
-        #         st.info("Global feedback recorded. Re-run adaptation with new instructions.")
-        #     elif feedback_type == "current":
-        #         local_feedbacks.append(feedback)
-        #         new_instruction = feedback
-        #         st.info("Local feedback recorded. Re-run adaptation.")
-        #     elif feedback.lower() == "yes":
-        #         st.success("Trajectory finalized!")
-        #         result_data = {
-        #             'instruction': instruction,
-        #             'original_trajectory': original_trajectory,
-        #             'modified_trajectory': modified_trajectory,
-        #             'feedback': {
-        #                 'global_feedbacks': global_feedbacks,
-        #                 'local_feedbacks': local_feedbacks
-        #             },
-        #             'LLM': llm_choice
-        #         }
-        #         with open("trajectory_results.json", "w") as f:
-        #             json.dump(result_data, f, indent=4)
-        #         st.success("Results saved successfully!")
-        #     else:
-        #         st.error("Invalid feedback. Choose from: YES, [original] feedback, [current] feedback.")
-            # if feedback.lower() == "yes":
-            #     st.success("Trajectory finalized!")
-        # except Exception as e:
-        #     st.error(f"Error executing the code: {e}")
+else:
+    st.session_state.clear()
