@@ -4,8 +4,9 @@ results/
 results_user_study/
 *.zip
 *.ipynb
-src/keys.py 
+src/OVITA/keys.py 
 temp.py
 src/__pycache__
 result_comparision/
 garbage/
+src/OVITA.egg-info
