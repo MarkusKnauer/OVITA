@@ -1,9 +1,9 @@
-<div style="text-align: center;">
+<div align="center">
 
   <h1>OVITA: Open Vocabulary Interpretable Trajectory Adaptations</h1>
   <h2>Robotics and Automation Letters 2025</h2>
 
-  <p>
+  <p align="center">
     <a href="https://anurag1000101.github.io/" target="_blank"><strong>Anurag Maurya</strong></a> <sup>1</sup>
     ·
     <a href="#" target="_blank"><strong>Tashmoy Ghosh</strong></a> <sup>1</sup>
@@ -13,7 +13,7 @@
     <a href="https://ravipr009.github.io/" target="_blank"><strong>Ravi Prakash</strong></a> <sup>1</sup>
   </p>
 
-  <p style="margin-top: 0;">
+  <p align="center" style="padding-top: 0px;">
     <sup>1</sup> Human Interactive Robotics Lab, IISc Bangalore <br>
     <sup>2</sup> Department of Computer Science, University of Liverpool, UK
   </p>
