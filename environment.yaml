@@ -87,6 +87,7 @@ dependencies:
       - packaging==24.2
       - pandas==2.3.0
       - parso==0.8.4
+      - pybullet==3.2.7
       - pillow==11.2.1
       - plotly==5.22.0
       - prompt-toolkit==3.0.51
