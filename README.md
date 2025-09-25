@@ -23,7 +23,7 @@
       <img src="https://img.shields.io/badge/arxiv-OVITA-red" alt="Paper PDF">
     </a>
 	<a href="https://ieeexplore.ieee.org/document/11150730">
-      <img src="https://img.shields.io/badge/Project-Website-green" alt="Paper Link">
+      <img src="https://img.shields.io/badge/ieee-link-blue" alt="Paper Link">
     </a>
     <a href="https://anurag1000101.github.io/projects/IISC/">
       <img src="https://img.shields.io/badge/Project-Website-green" alt="Project Page">
