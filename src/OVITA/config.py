@@ -32,9 +32,9 @@ class Config:
         self.fix_start=False
         self.fix_goal=False
         self.max_vel=1.0
-        self.apply_smooth_spline=True
+        self.apply_spline_smooth=True
         self.api_name="openai"
-        self.model_gemini="gemini-1.5-pro"
+        self.model_gemini="gemini-2.5-flash"
         self.model_openai="gpt-4o"
         self.model_claude="claude-3-opus-20240229"
         self.temperature=0.1

@@ -25,6 +25,9 @@ Step 1: Environment Setup
     --llm claude \
     --save_results True \
     --robot_type Drone
+  
+  OR: `bash start.sh`
+
 
   How It Works (Paper Workflow)
 
