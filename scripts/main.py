@@ -96,7 +96,7 @@ if __name__=="__main__":
     
     args = parser.parse_args()
 
-    trajectory_path=os.getcwd()+args.trajectory_path
+    trajectory_path=os.path.join(os.getcwd(), args.trajectory_path)
     file_name = os.path.basename(trajectory_path)
     save_dir=args.save_dir
     os.makedirs(os.path.dirname(save_dir), exist_ok=True)

@@ -1,0 +1,3 @@
+[submodule "LaTTe-Language-Trajectory-TransformEr"]
+	path = LaTTe-Language-Trajectory-TransformEr
+	url = git@github.com:MarkusKnauer/LaTTe-Language-Trajectory-TransformEr.git

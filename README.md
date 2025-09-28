@@ -1,6 +1,9 @@
 Step 1: Environment Setup
 
-# Create conda environment(Original environment.yaml is Windows specific!)
+# Initialize git submodules (for LaTTe integration)
+  git submodule update --init --recursive
+
+# Create conda environment (Original environment.yaml is Windows specific!)
   conda env create -f environment_linux.yaml
   conda activate ovita
   pip install -e .
@@ -13,14 +16,14 @@ Step 1: Environment Setup
   # OR
   export OPENAI_API_KEY="your_openai_api_key"
   # OR
-  export GEMINI_API_KEY="your_gemini_api_key"
+  export GOOGLE_API_KEY="your_google_api_key"  # For Gemini
 
   Step 3: Run the System
 
   Use the main script with a trajectory from the dataset:
 
   python scripts/main.py \
-    --trajectory_path /dataset/latte_subset/latte_49.json \
+    --trajectory_path dataset/latte_subset/latte_49.json \
     --save_dir ./results/ \
     --llm claude \
     --save_results True \
@@ -28,6 +31,42 @@ Step 1: Environment Setup
   
   OR: `bash start.sh`
 
+  ## 🆚 OVITA vs LaTTe Comparison
+
+  Compare OVITA (LLM-based) with LaTTe (Transformer-based) trajectory adaptation on any dataset trajectory:
+
+  ### Quick Comparison (3 steps):
+
+  ```bash
+  # 1. Set up LaTTe environment (one-time setup)
+  conda env create -f environment_latte.yaml
+  conda activate latte
+
+  # 2. Run comparison on any trajectory
+  python compare_with_latte.py dataset/latte_subset/latte_0.json
+
+  # 3. View results in comparison_results/
+  ```
+
+  **What you get:**
+  - 🧠 **LaTTe trajectory**: `comparison_results/latte_adapted_[filename].json`
+  - ⚡ **OVITA trajectory**: `comparison_results/[filename].json`
+  - 📊 **Side-by-side comparison** showing different approaches
+
+  ### Optional: Full LaTTe Setup
+
+  For actual LaTTe Transformer models (not required for comparison):
+  ```bash
+  cd LaTTe-Language-Trajectory-TransformEr
+  gdown --folder https://drive.google.com/drive/folders/1r8BYvpu1AMj9tY0gt5YYigYgZqhzHQhf?usp=sharing -O models/.
+  gdown --folder https://drive.google.com/drive/folders/11NAmB1Rma-gOsh-b-KZB90xjGplal2Z8?usp=sharing -O data/.
+  ```
+
+  ### Key Differences:
+  | Method | Approach | Speed | Flexibility | Setup |
+  |--------|----------|-------|-------------|--------|
+  | **OVITA** | Real-time LLM code generation | Medium | High (any instruction) | Simple |
+  | **LaTTe** | Pre-trained Transformer | Fast | Limited (training patterns) | Complex |
 
   How It Works (Paper Workflow)
 
