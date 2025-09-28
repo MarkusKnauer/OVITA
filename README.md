@@ -1,35 +1,34 @@
-Step 1: Environment Setup
+# Step 1: Environment Setup
 
+## Create conda environment(Original environment.yaml is Windows specific!)
+  - `conda env create -f environment_linux.yaml`
+  - `conda activate ovita`
+  - `pip install -e .`
 # Initialize git submodules (for LaTTe integration)
   git submodule update --init --recursive
 
-# Create conda environment (Original environment.yaml is Windows specific!)
-  conda env create -f environment_linux.yaml
-  conda activate ovita
-  pip install -e .
-
-  Step 2: Set API Keys
+# Step 2: Set API Keys
 
   You need to set at least one LLM API key as an environment variable:
 
-  export CLAUDE_API_KEY="your_claude_api_key"
-  # OR
-  export OPENAI_API_KEY="your_openai_api_key"
-  # OR
-  export GOOGLE_API_KEY="your_google_api_key"  # For Gemini
+  - export CLAUDE_API_KEY="your_claude_api_key"
+  OR
+  - export OPENAI_API_KEY="your_openai_api_key"
+  OR
+  - `export GEMINI_API_KEY="your_gemini_api_key"` (thats the only one for FREE!!)
 
-  Step 3: Run the System
+# Step 3: Run the System
 
   Use the main script with a trajectory from the dataset:
-
+```bash
   python scripts/main.py \
-    --trajectory_path dataset/latte_subset/latte_49.json \
+    --trajectory_path /dataset/latte_subset/latte_49.json \
     --save_dir ./results/ \
     --llm claude \
     --save_results True \
     --robot_type Drone
-  
-  OR: `bash start.sh`
+```
+  ## OR: `bash start.sh`
 
   ## 🆚 OVITA vs LaTTe Comparison
 
