@@ -1,19 +1,19 @@
 # Step 1: Environment Setup
 
 ## Create conda environment(Original environment.yaml is Windows specific!)
-  `conda env create -f environment_linux.yaml`
-  `conda activate ovita`
-  `pip install -e .`
+  - `conda env create -f environment_linux.yaml`
+  - `conda activate ovita`
+  - `pip install -e .`
 
 # Step 2: Set API Keys
 
   You need to set at least one LLM API key as an environment variable:
 
-  export CLAUDE_API_KEY="your_claude_api_key"
+  - export CLAUDE_API_KEY="your_claude_api_key"
   OR
-  export OPENAI_API_KEY="your_openai_api_key"
+  - export OPENAI_API_KEY="your_openai_api_key"
   OR
-  `export GEMINI_API_KEY="your_gemini_api_key"` (thats the only one for FREE!!)
+  - `export GEMINI_API_KEY="your_gemini_api_key"` (thats the only one for FREE!!)
 
 # Step 3: Run the System
 
