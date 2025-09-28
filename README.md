@@ -1,3 +1,64 @@
+Step 1: Environment Setup
+
+# Create conda environment(Original environment.yaml is Windows specific!)
+  conda env create -f environment_linux.yaml
+  conda activate ovita
+  pip install -e .
+
+  Step 2: Set API Keys
+
+  You need to set at least one LLM API key as an environment variable:
+
+  export CLAUDE_API_KEY="your_claude_api_key"
+  # OR
+  export OPENAI_API_KEY="your_openai_api_key"
+  # OR
+  export GEMINI_API_KEY="your_gemini_api_key"
+
+  Step 3: Run the System
+
+  Use the main script with a trajectory from the dataset:
+
+  python scripts/main.py \
+    --trajectory_path /dataset/latte_subset/latte_49.json \
+    --save_dir ./results/ \
+    --llm claude \
+    --save_results True \
+    --robot_type Drone
+
+  How It Works (Paper Workflow)
+
+  1. Loads trajectory from dataset (format: [[x,y,z,speed], ...] with objects and instruction)
+  2. Sends instruction to Claude with prompts to generate Python code that modifies the trajectory
+  3. Executes the generated code to produce modified_trajectory
+  4. Applies safety constraints via the CSM (Code Safety Monitor) module
+  5. Visualizes original vs modified trajectory with matplotlib
+  6. Interactive feedback loop: You can provide feedback and the system will iterate
+  7. Saves results as JSON with both zero-shot and final trajectories
+
+  Available Options
+
+  - LLM: openai, claude, gemini
+  - Robot Type: Drone, Arm, GroundRobot, None
+  - Dataset: Use any JSON file from dataset/latte_subset/, dataset/robot_subset/, or dataset/extended_subset/
+
+  Example Dataset Structure
+
+  The trajectory files contain:
+  - trajectory: List of [x, y, z, velocity] waypoints
+  - instruction: Natural language command (e.g., "walk much closer to the dumbbell")
+  - objects: Environment objects with positions
+  - constraints: Additional constraints (if any)
+
+  The system will generate Python code to modify the trajectory according to your instruction, execute it safely, and show you the results visually.
+
+
+
+
+
+--------------------------------------- original
+
+
 <div align="center">
 
   <h1>OVITA: Open Vocabulary Interpretable Trajectory Adaptations</h1>
