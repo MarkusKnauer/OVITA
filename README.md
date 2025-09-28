@@ -22,13 +22,13 @@
   Use the main script with a trajectory from the dataset:
 ```bash
   python scripts/main.py \
-    --trajectory_path /dataset/latte_subset/latte_49.json \
+    --trajectory_path dataset/latte_subset/latte_49.json \
     --save_dir ./results/ \
     --llm claude \
     --save_results True \
     --robot_type Drone
 ```
-  ## OR: `bash start.sh`
+  ## OR: `bash run.sh`
 
   ## 🆚 OVITA vs LaTTe Comparison
 
@@ -47,10 +47,32 @@
   # 3. View results in comparison_results/
   ```
 
+  ### Manual Step-by-Step Comparison:
+
+  To manually compare LaTTe and OVITA on the same trajectory:
+
+  ```bash
+  # 1. Run trajectory through LaTTe first
+  conda activate latte
+  python simple_latte_adapter.py --trajectory_path dataset/latte_subset/latte_10.json --output_dir comparison_results/
+
+  # 2. Run same trajectory through OVITA
+  conda activate ovita
+  python scripts/main.py --trajectory_path dataset/latte_subset/latte_10.json --save_dir comparison_results/ --llm gemini --save_results True --robot_type Drone
+
+  # 3. Compare results
+  # LaTTe result: comparison_results/latte_adapted_latte_10.json
+  # OVITA result: comparison_results/latte_10.json
+
+  # 4. Visualize the comparison
+  python visualize_comparison.py latte_10 --save
+  ```
+
   **What you get:**
   - 🧠 **LaTTe trajectory**: `comparison_results/latte_adapted_[filename].json`
   - ⚡ **OVITA trajectory**: `comparison_results/[filename].json`
-  - 📊 **Side-by-side comparison** showing different approaches
+  - 📊 **Comprehensive visualization**: `comparison_results/[filename]_comparison.png`
+  - 📈 **Statistical comparison** with metrics like velocity profiles, path length, and waypoint differences
 
   ### Optional: Full LaTTe Setup
 

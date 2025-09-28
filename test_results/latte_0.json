@@ -1,8 +1,0 @@
-{
-    "zero_shot_trajectory": {
-        "code_executability": false
-    },
-    "final_trajectory": {},
-    "LLM": "gemini",
-    "code_executability": true
-}

@@ -1,0 +1,22 @@
+{
+  "OVITA": {
+    "approach": "LLM Code Generation",
+    "method": "Real-time Python code generation",
+    "training_required": false,
+    "flexibility": "High - handles any new instruction",
+    "interpretability": "High - shows generated code",
+    "setup_complexity": "Low - just needs API key",
+    "inference_speed": "Medium - depends on LLM response",
+    "novel_scenarios": "Excellent - generates new code patterns"
+  },
+  "LaTTe": {
+    "approach": "Pre-trained Transformer",
+    "method": "Neural network trajectory modification",
+    "training_required": true,
+    "flexibility": "Medium - limited to training distribution",
+    "interpretability": "Low - black box neural network",
+    "setup_complexity": "High - requires model training/downloading",
+    "inference_speed": "Fast - direct neural inference",
+    "novel_scenarios": "Limited - needs retraining for new patterns"
+  }
+}
